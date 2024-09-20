@@ -56,9 +56,9 @@ vi security.tf---4
   }
 
   ingress {
-    description = "Allow Port 443"
-    from_port   = 443
-    to_port     = 443
+    description = "Allow Port 22"
+    from_port   = 22
+    to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
