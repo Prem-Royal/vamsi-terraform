@@ -14,7 +14,6 @@ profile = "default"
 region = "eu-west-3"
 }
 vi ec2.tf----2
-  # Create EC2 Instance - Amazon Linux
 resource "aws_instance" "my-ec2-vm" {
   ami           = data.aws_ami.amzlinux.id
   instance_type = var.ec2_instance_type
@@ -25,8 +24,7 @@ resource "aws_instance" "my-ec2-vm" {
     "Name" = "amz-linux-vm"
   }
 }
-vi data.tf----3
-  # Get latest AMI ID for Amazon Linux2 OS
+vi data.tf
 data "aws_ami" "amzlinux" {
   most_recent = true
   owners = [ "amazon" ]
@@ -47,8 +45,30 @@ data "aws_ami" "amzlinux" {
     values = [ "x86_64" ]
   }
 }
-vi security.tf---4
-      description = "Allow Port 80"
+vi security.tf
+resource "aws_security_group" "vpc-ssh" {
+  name        = "vpc-ssh"
+  description = "Dev VPC SSH"
+  ingress {
+    description = "Allow Port 22"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    description = "Allow all ip and ports outboun"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+resource "aws_security_group" "vpc-web" {
+  name        = "vpc-web"
+  description = "Dev VPC web"
+  ingress {
+    description = "Allow Port 80"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -56,9 +76,9 @@ vi security.tf---4
   }
 
   ingress {
-    description = "Allow Port 22"
-    from_port   = 22
-    to_port     = 22
+    description = "Allow Port 443"
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -70,32 +90,28 @@ vi security.tf---4
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
 }
 vi variable.tf----5
-  # Input Variables
 variable "aws_region" {
   description = "Region in which AWS Resources to be created"
   type = string
   default = "us-east-1"
 }
-
-
 variable "ec2_instance_type" {
   description = "EC2 Instance Type"
   type = string
   default = "t3.micro"
 }
 vi output.tf----6
-  # Define Output Values
-
-# Attribute Reference
 output "ec2_instance_publicip" {
   description = "EC2 Instance Public IP"
   value = aws_instance.my-ec2-vm.public_ip
 }
-
-# Attribute Reference - Create Public DNS URL
-output "ec2_publicdns" {
-  description = "Public DNS URL of an EC2 Instance"
-  value = aws_instance.my-ec2-vm.public_dns
-}
+vi apache-install.sh
+#! /bin/bash
+sudo yum update -y
+sudo yum installl -y httpd
+sudo systemctl enable httpd
+sudo service httpd start
+echo "<h1>Welcome to vcube ! AWS Infra created using  terraform in us-east-1 Region </h1>" sudo tee /var/www/html/index.html
